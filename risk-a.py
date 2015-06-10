@@ -9,8 +9,8 @@ np.set_printoptions(precision=3)
 #np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
 def plotLine(x,y1,y2,y3,fileName):
-	line, = plt.plot(x, y1, '-', linewidth=2, color='red', label='PR')
-	line, = plt.plot(x, y2, '-', linewidth=2, color='blue', label='ERP')
+	line, = plt.plot(x, y1, '-', linewidth=2, color='blue', label='PR')
+	line, = plt.plot(x, y2, '--', linewidth=2, color='red', label='ERP')
 	line, = plt.plot(x, y3, '-', linewidth=2, color='green', label='PRP')
 
 	#tick no eixo x
@@ -19,7 +19,7 @@ def plotLine(x,y1,y2,y3,fileName):
 	plt.yticks(np.arange(min(x), max(x)+1, .05))
 
 	#define o range
-	plt.axis([0,17,1,2])
+	plt.axis([0,4,1,2])
 
 	# draw vertical line from [xfinal,xinicial][yfinal,yinicial]
 	for i in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]:	
@@ -32,6 +32,8 @@ def plotLine(x,y1,y2,y3,fileName):
 	#line.set_dashes(dashes)
 	#plt.show()
 	plt.savefig(fileName)
+	plt.clf()
+	plt.close()
 
 
 
@@ -136,33 +138,34 @@ def getPRC(coleta):
 		pr += r[1]*r[2] 
 	return pr
 
-rp=[]
-erp=[]
-prp=[]
+
 print 'normal'
-#coletas = range(1,11)
-coletas = [1,7,2,8,3,6,11,4,9,5,10,11,12,13,14,15]
-for i in coletas:
-	a = (float(getRP(i))/len(getREList(i)))
-	rp.append(a)
-	print a
-print '* ER'
-for i in coletas:
-	a = (float(getERP(i))/len(getREList(i)))
-	erp.append(a)
-	print a
-for i in coletas:
-	#N.append(float(getRP(i))/len(getREList(i)))
-	prp.append(float(getPRP(i))/len(getREList(i)))
-	#prp.append((float(getERP(i))-getRP(i))#relacao entre ERP e RP
-	#normalizador /len(getREList(i)) -> qtd riscos
+coletas = [[1,7,12], #inscricoes
+		   [2,8,13], #tcc
+		   [3,6,11], #estante
+		   [4,9,14], #turma D
+		   [5,10,15]] #academico
 
-
-plotLine(range(1,len(rp)+1),rp,erp,prp,'foo')
-
-
-
-
-
-
-
+for c in range(5):
+	rp=[]
+	erp=[]
+	prp=[]
+	nome = "metricas_projeto_%d" %(c+1)
+	print nome	
+	cont = 1
+	for i in coletas[c]:
+		a = (float(getRP(i))/len(getREList(i)))
+		rp.append(a)
+		b = (float(getERP(i))/len(getREList(i)))
+		erp.append(b)
+		c = float(getPRP(i))/len(getREList(i))
+		prp.append(c)
+		print "Coleta %d: " %cont
+		print "RP: %f, ERP %f, PRP %f" %(a,b,c)
+		cont += 1
+		#N.append(float(getRP(i))/len(getREList(i)))
+		#prp.append((float(getERP(i))-getRP(i))#relacao entre ERP e RP
+		#normalizador /len(getREList(i)) -> qtd riscos
+	##plotLine(range(1,len(rp)+1),rp,erp,prp,'foo')
+	plotLine(range(1,len(rp)+1),rp,erp,prp,nome)
+	print "---------\n\n"
