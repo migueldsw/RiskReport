@@ -35,12 +35,9 @@ def plotLine(x,y1,y2,y3,fileName):
 	plt.clf()
 	plt.close()
 
-
-
 def getDBCursor():
 	db = sqlite3.connect('cri_db')
-	c = db.cursor()
-	return c
+	return db.cursor()
 
 def getValues(query):
 	ret = []
@@ -63,8 +60,7 @@ def formatColumn(matrix,index):
 		r[index] = r[index].encode('utf-8')
 
 def getREList(coleta):
-	a = getValues('SELECT  riskexposure_id AS _id, prob, impact, risk_id from (SELECT _id AS collect_tb_id, timestamp, project_id, answerlist FROM collect_tb), (SELECT _id AS riskexposure_tb_id, prob, impact, risk_id FROM riskexposure_tb), collect_riskexposure_tb WHERE collect_tb_id = collect_id AND riskexposure_tb_id = riskexposure_id AND collect_id = %d' %coleta)
-	return a
+	return getValues('SELECT  riskexposure_id AS _id, prob, impact, risk_id from (SELECT _id AS collect_tb_id, timestamp, project_id, answerlist FROM collect_tb), (SELECT _id AS riskexposure_tb_id, prob, impact, risk_id FROM riskexposure_tb), collect_riskexposure_tb WHERE collect_tb_id = collect_id AND riskexposure_tb_id = riskexposure_id AND collect_id = %d' %coleta)
 
 def getRP(coleta):
 	#sem FCP
@@ -138,6 +134,49 @@ def getPRC(coleta):
 		pr += r[1]*r[2] 
 	return pr
 
+def getRiskInfo(coleta):
+	REList = getREList(coleta)
+	probList = REList[:,1]
+	impactList = REList[:,2]
+	maxImp = np.max(impactList)
+	minImp = np.min(impactList)
+	maxProb = np.max(probList)
+	minProb = np.min(probList)
+	avgImpact = np.mean(impactList)
+	avgProb = np.mean(probList)
+	sigmaImpact = np.std(impactList)#desvio padrao
+	sigmaProb = np.std(probList)
+	print "impact"
+	print maxImp
+	print minImp
+	print avgImpact
+	print sigmaImpact
+	print "probability"
+	print maxProb
+	print minProb
+	print avgProb
+	print sigmaProb
+
+def getREInfo(coleta):
+	REList = getREList(coleta)
+	probList = REList[:,1]
+	impactList = REList[:,2]
+	REList = []
+	for i in range(len(probList)):
+		REList.append(probList[i]*impactList[i])
+	REList = np.array(REList)
+	maxRE = np.max(REList)
+	minRE = np.min(REList)
+	avgRE = np.mean(REList)
+	sigmaRE = np.std(REList)
+	print "RE"
+	print maxRE
+	print minRE
+	print avgRE
+	print sigmaRE
+
+
+
 
 print 'normal'
 coletas = [[1,7,12], #inscricoes
@@ -146,26 +185,33 @@ coletas = [[1,7,12], #inscricoes
 		   [4,9,14], #turma D
 		   [5,10,15]] #academico
 
-for c in range(5):
-	rp=[]
-	erp=[]
-	prp=[]
-	nome = "metricas_projeto_%d" %(c+1)
-	print nome	
-	cont = 1
-	for i in coletas[c]:
-		a = (float(getRP(i))/len(getREList(i)))
-		rp.append(a)
-		b = (float(getERP(i))/len(getREList(i)))
-		erp.append(b)
-		c = float(getPRP(i))/len(getREList(i))
-		prp.append(c)
-		print "Coleta %d: " %cont
-		print "RP: %f, ERP %f, PRP %f" %(a,b,c)
-		cont += 1
-		#N.append(float(getRP(i))/len(getREList(i)))
-		#prp.append((float(getERP(i))-getRP(i))#relacao entre ERP e RP
-		#normalizador /len(getREList(i)) -> qtd riscos
-	##plotLine(range(1,len(rp)+1),rp,erp,prp,'foo')
-	plotLine(range(1,len(rp)+1),rp,erp,prp,nome)
-	print "---------\n\n"
+def main():
+	for c in range(5):
+		rp=[]
+		erp=[]
+		prp=[]
+		nome = "metricas_projeto_%d" %(c+1)
+		print nome	
+		cont = 1
+		for i in coletas[c]:
+			a = (float(getRP(i))/len(getREList(i)))
+			rp.append(a)
+			b = (float(getERP(i))/len(getREList(i)))
+			erp.append(b)
+			c = float(getPRP(i))/len(getREList(i))
+			prp.append(c)
+			print "Coleta %d: " %cont
+			print "RP: %f, ERP %f, PRP %f" %(a,b,c)
+			cont += 1
+			#N.append(float(getRP(i))/len(getREList(i)))
+			#prp.append((float(getERP(i))-getRP(i))#relacao entre ERP e RP
+			#normalizador /len(getREList(i)) -> qtd riscos
+		##plotLine(range(1,len(rp)+1),rp,erp,prp,'foo')
+		plotLine(range(1,len(rp)+1),rp,erp,prp,nome)
+		print "---------\n\n"
+
+
+for c in coletas[0]:
+	getRiskInfo(c)
+	getREInfo(c)
+	print"------------\n"
