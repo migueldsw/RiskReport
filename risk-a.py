@@ -19,7 +19,7 @@ def plotLine(x,y1,y2,y3,fileName):
 	plt.yticks(np.arange(min(x), max(x)+1, .05))
 
 	#define o range
-	plt.axis([0,4,1,2])
+	plt.axis([0,5,1,2])
 
 	# draw vertical line from [xfinal,xinicial][yfinal,yinicial]
 	for i in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]:	
@@ -146,12 +146,12 @@ def getRiskInfo(coleta):
 	avgProb = np.mean(probList)
 	sigmaImpact = np.std(impactList)#desvio padrao
 	sigmaProb = np.std(probList)
-	print "impact"
+	print "impact (max,min,avg,sigma)"
 	print maxImp
 	print minImp
 	print avgImpact
 	print sigmaImpact
-	print "probability"
+	print "probability (max,min,avg,sigma)"
 	print maxProb
 	print minProb
 	print avgProb
@@ -169,7 +169,7 @@ def getREInfo(coleta):
 	minRE = np.min(REList)
 	avgRE = np.mean(REList)
 	sigmaRE = np.std(REList)
-	print "RE"
+	print "RE (max,min,avg,sigma)"
 	print maxRE
 	print minRE
 	print avgRE
@@ -179,18 +179,28 @@ def getREInfo(coleta):
 
 
 print 'normal'
-coletas = [[1,7,12], #inscricoes
-		   [2,8,13], #tcc
-		   [3,6,11], #estante
-		   [4,9,14], #turma D
-		   [5,10,15]] #academico
+coletas = [[1,7,12,18], #inscricoes
+		   [2,8,13,19], #tcc
+		   [3,6,11,16], #estante ,
+		   [4,9,14,17], #turma D
+		   [5,10,15,23]] #academico
+projetos = ["inscricoes","tcc","estante","turma_D","academico"]
 
 def main():
 	for c in range(5):
 		rp=[]
 		erp=[]
 		prp=[]
-		nome = "metricas_projeto_%d" %(c+1)
+		print "Projeto: %s, Riscos"
+		cont = 1
+		for i in coletas[c]:
+			print "coleta: %d" %(cont)
+			cont += 1
+			getRiskInfo(i)
+			getREInfo(i)
+			print"\n"
+		print"------------\n"
+		nome = "metricas_projeto_%s" %(projetos[c])
 		print nome	
 		cont = 1
 		for i in coletas[c]:
@@ -215,3 +225,5 @@ for c in coletas[0]:
 	getRiskInfo(c)
 	getREInfo(c)
 	print"------------\n"
+
+main()
