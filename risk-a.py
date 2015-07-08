@@ -37,9 +37,21 @@ def plotLine(x,y1,y2,y3,path,fileName):
 	plt.clf()
 	plt.close()
 
-def plotIndicatorLine(values,curvesNames,xyRange,path,fileName):
+def vmax(y):
+	l = []
+	for i in y:
+		l += i
+	return max(l)
+def vmin(y):
+	l = []
+	for i in y:
+		l += i
+	return min(l)
+
+def plotIndicatorLine(values,curvesNames,path,fileName):
 	y = values
 	x = range(1,len(y[0])+1)
+	xyRange = [0,len(y[0])+1,np.floor(vmin(values)),np.ceil(vmax(values))]
 	curves = len(y)
 	colors = ["r","g","b","c","m","y","k"]
 	for c in range(curves):
@@ -48,7 +60,7 @@ def plotIndicatorLine(values,curvesNames,xyRange,path,fileName):
 	#tick no eixo x
 	plt.xticks(np.arange(min(x), max(x)+1, 1.0))
 	#tick no eixo y
-	plt.yticks(np.arange(min(x), max(x)+1, .05))
+	plt.yticks(np.arange(np.floor(vmin(values)), np.ceil(vmax(values))+1, .05))
 
 	#define o range
 	plt.axis(xyRange)#plt.axis([0,5,1,2])
@@ -278,7 +290,7 @@ def main():
 		erp2 = getIndicatorValuesList(c,"ERP",True)
 		prp2 = getIndicatorValuesList(c,"PRP",True)
 
-		plotIndicatorLine([rp2,erp2,prp2],["PR","ERP","PRP"],[0,5,1,2],"plots",nome)
+		plotIndicatorLine([rp2,erp2,prp2],["PR","ERP","PRP"],"plots",nome)
 
 		print "---------\n\n"
 
@@ -290,7 +302,7 @@ def environmentEvaluate(metric,normal):
 	for projID in range(5):
 		v = getIndicatorValuesList(projID,metric,normal)
 		metricsValues.append(v)
-	plotIndicatorLine(metricsValues,projetos,[0,5,1,2],"environment-plots",name)
+	plotIndicatorLine(metricsValues,projetos,"environment-plots",name)
 
 
 for c in coletas[0]:
