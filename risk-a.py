@@ -11,6 +11,7 @@ np.set_printoptions(precision=3)
 
 #MACROS
 SHOWNUMBERSPLOT = True
+METRICLIST = ["RP","ERP","PRP", "CRIT"]
 
 
 def plotLine(x,y1,y2,y3,path,fileName):
@@ -267,11 +268,6 @@ coletas = [[1,7,12,18], #inscricoes => 0
 		   [3,6,11,16], #estante , => 2
 		   [4,9,14,17], #turma D => 3
 		   [5,10,15,23]] #academico => 4
-coletas = [[1,7,12], #inscricoes => 0
-		   [2,8,13], #tcc => 1
-		   [3,6,11], #estante , => 2
-		   [4,9,14], #turma D => 3
-		   [5,10,15]] #academico => 4
 projetos = ["inscricoes","tcc","estante","turma_D","academico"]
 
 def main():
@@ -311,9 +307,19 @@ def main():
 		erp2 = getIndicatorValuesList(c,"ERP",True)
 		prp2 = getIndicatorValuesList(c,"PRP",True)
 
-		plotIndicatorLine([rp2,erp2,prp2],["PR","ERP","PRP"],"plots",nome)
+		plotIndicatorLine([rp2,erp2,prp2],["RP","ERP","PRP"],"plots",nome)
 
 		print "---------\n\n"
+def projectEvaluate(projectID, normal):
+	name = "%s_normal=%s"%(projetos[projectID],normal)
+	print "evaluate: %s"%name
+	metricsValues = []
+	for metric in METRICLIST:
+		v= getIndicatorValuesList(projectID,metric,normal)
+		metricsValues.append(v)
+	plotIndicatorLine(metricsValues,METRICLIST,"projects-plots",name)
+
+
 
 def environmentEvaluate(metric,normal):
 	name = "environment_metric=%s_normal=%s"%(metric,normal)
@@ -331,12 +337,13 @@ for c in coletas[0]:
 	getREInfo(c)
 	print"------------\n"
 
-main()
-environmentEvaluate("ERP",True)
-environmentEvaluate("RP",True)
-environmentEvaluate("PRP",True)
-environmentEvaluate("CRIT",True)
-environmentEvaluate("ERP",False)
-environmentEvaluate("RP",False)
-environmentEvaluate("PRP",False)
-environmentEvaluate("CRIT",False)
+#==============================#
+#main()
+
+for proj in range(5):
+	for norm in [True,False]:
+		projectEvaluate(proj,norm)
+
+for metric in METRICLIST:
+	for norm in [True,False]:
+		environmentEvaluate(metric,norm)
