@@ -9,6 +9,10 @@ np.set_printoptions(suppress=True)
 np.set_printoptions(precision=3)
 #np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
+#MACROS
+SHOWNUMBERSPLOT = True
+
+
 def plotLine(x,y1,y2,y3,path,fileName):
 	line, = plt.plot(x, y1, '-', linewidth=2, color='blue', label='PR')
 	line, = plt.plot(x, y2, '--', linewidth=2, color='red', label='ERP')
@@ -51,16 +55,29 @@ def vmin(y):
 def plotIndicatorLine(values,curvesNames,path,fileName):
 	y = values
 	x = range(1,len(y[0])+1)
-	xyRange = [0,len(y[0])+1,np.floor(vmin(values)),np.ceil(vmax(values))]
+	botPlot = np.floor(vmin(values))
+	topPlot = np.ceil(vmax(values))
+	botPlot = (vmin(values))
+	topPlot = (vmax(values))
+	xyRange = [0,len(y[0])+1,botPlot,topPlot]
 	curves = len(y)
 	colors = ["r","g","b","c","m","y","k"]
+	fig = plt.figure()
 	for c in range(curves):
-		plt.plot(x,y[c],'-',linewidth=2,color=colors[c],label=curvesNames[c])
-
+		#values on points
+		ax = fig.add_subplot(111)
+		ax.set_ylim(botPlot,topPlot)
+		for i,j in zip(x,y[c]):
+			if SHOWNUMBERSPLOT:
+				ax.annotate(str("%.2f"%j),xy=(i,j),xytext=(5,5), textcoords='offset points')
+		#curve plot
+		plt.plot(x,y[c],'-ro',linewidth=2,color=colors[c],label=curvesNames[c])
+		
 	#tick no eixo x
 	plt.xticks(np.arange(min(x), max(x)+1, 1.0))
 	#tick no eixo y
-	plt.yticks(np.arange(np.floor(vmin(values)), np.ceil(vmax(values))+1, .05))
+	ytickSize = float(topPlot+1-botPlot)/20#20 ticks
+	plt.yticks(np.arange(botPlot, topPlot+1, ytickSize))
 
 	#define o range
 	plt.axis(xyRange)#plt.axis([0,5,1,2])
@@ -70,7 +87,7 @@ def plotIndicatorLine(values,curvesNames,path,fileName):
 		plt.plot([i, i], xyRange[2:], 'k--')
 
 	#plt.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
-	plt.legend( loc=2, borderaxespad=0.)
+	plt.legend( loc=0, borderaxespad=0.)# loc=0-> best
 
 	#dashes = [10, 5, 100, 5] # 10 points on, 5 off, 100 on, 5 off
 	#line.set_dashes(dashes)
@@ -250,7 +267,11 @@ coletas = [[1,7,12,18], #inscricoes => 0
 		   [3,6,11,16], #estante , => 2
 		   [4,9,14,17], #turma D => 3
 		   [5,10,15,23]] #academico => 4
-
+coletas = [[1,7,12], #inscricoes => 0
+		   [2,8,13], #tcc => 1
+		   [3,6,11], #estante , => 2
+		   [4,9,14], #turma D => 3
+		   [5,10,15]] #academico => 4
 projetos = ["inscricoes","tcc","estante","turma_D","academico"]
 
 def main():
@@ -315,3 +336,7 @@ environmentEvaluate("ERP",True)
 environmentEvaluate("RP",True)
 environmentEvaluate("PRP",True)
 environmentEvaluate("CRIT",True)
+environmentEvaluate("ERP",False)
+environmentEvaluate("RP",False)
+environmentEvaluate("PRP",False)
+environmentEvaluate("CRIT",False)
