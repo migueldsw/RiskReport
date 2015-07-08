@@ -2,13 +2,14 @@
 import sqlite3
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 #pretty printing
 np.set_printoptions(suppress=True)
 np.set_printoptions(precision=3)
 #np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
-def plotLine(x,y1,y2,y3,fileName):
+def plotLine(x,y1,y2,y3,path,fileName):
 	line, = plt.plot(x, y1, '-', linewidth=2, color='blue', label='PR')
 	line, = plt.plot(x, y2, '--', linewidth=2, color='red', label='ERP')
 	line, = plt.plot(x, y3, '-', linewidth=2, color='green', label='PRP')
@@ -31,9 +32,14 @@ def plotLine(x,y1,y2,y3,fileName):
 	#dashes = [10, 5, 100, 5] # 10 points on, 5 off, 100 on, 5 off
 	#line.set_dashes(dashes)
 	#plt.show()
-	plt.savefig(fileName)
+	checkDir(path)
+	plt.savefig(path +"/"+fileName)
 	plt.clf()
 	plt.close()
+
+def checkDir(directory):
+	if not os.path.exists(directory):
+		os.makedirs(directory)
 
 def getDBCursor():
 	db = sqlite3.connect('cri_db')
@@ -217,7 +223,7 @@ def main():
 			#prp.append((float(getERP(i))-getRP(i))#relacao entre ERP e RP
 			#normalizador /len(getREList(i)) -> qtd riscos
 		##plotLine(range(1,len(rp)+1),rp,erp,prp,'foo')
-		plotLine(range(1,len(rp)+1),rp,erp,prp,nome)
+		plotLine(range(1,len(rp)+1),rp,erp,prp,"plots",nome)
 		print "---------\n\n"
 
 
