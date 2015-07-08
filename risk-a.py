@@ -37,6 +37,37 @@ def plotLine(x,y1,y2,y3,path,fileName):
 	plt.clf()
 	plt.close()
 
+def plotIndicatorLine(values,curvesNames,xyRange,path,fileName):
+	y = values
+	x = range(1,len(y[0])+1)
+	curves = len(y)
+	colors = ["r","g","b","c","m","y","k"]
+	for c in range(curves):
+		plt.plot(x,y[c],'-',linewidth=2,color=colors[c],label=curvesNames[c])
+
+	#tick no eixo x
+	plt.xticks(np.arange(min(x), max(x)+1, 1.0))
+	#tick no eixo y
+	plt.yticks(np.arange(min(x), max(x)+1, .05))
+
+	#define o range
+	plt.axis(xyRange)#plt.axis([0,5,1,2])
+
+	# draw vertical line from [xfinal,xinicial][yfinal,yinicial]
+	for i in range(xyRange[0],xyRange[1]):	
+		plt.plot([i, i], xyRange[2:], 'k--')
+
+	#plt.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
+	plt.legend( loc=2, borderaxespad=0.)
+
+	#dashes = [10, 5, 100, 5] # 10 points on, 5 off, 100 on, 5 off
+	#line.set_dashes(dashes)
+	#plt.show()
+	checkDir(path)
+	plt.savefig(path +"/"+fileName)
+	plt.clf()
+	plt.close()
+
 def checkDir(directory):
 	if not os.path.exists(directory):
 		os.makedirs(directory)
@@ -132,6 +163,7 @@ def getRPc(coleta):
 		pr += (peso*RE)
 	return pr
 
+	
 
 def getPRC(coleta):
 	#sem FCP
@@ -182,14 +214,31 @@ def getREInfo(coleta):
 	print sigmaRE
 
 
-
+def getIndicatorValuesList(project,indicator,normal):
+	collectList = coletas[project]
+	lst = []
+	for i in collectList:
+		v=0.
+		if indicator == "RP":
+			v = getRP(i)
+		elif indicator =="ERP":
+			v = getERP(i)
+		elif indicator == "PRP":
+			v = getPRP(i)
+		elif indicator == "CRIT":
+			v = getERP(i)-getRP(i)	
+		if normal:
+			v = float(v)/len(getREList(i))
+		lst.append(v)
+	return lst
 
 print 'normal'
-coletas = [[1,7,12,18], #inscricoes
-		   [2,8,13,19], #tcc
-		   [3,6,11,16], #estante ,
-		   [4,9,14,17], #turma D
-		   [5,10,15,23]] #academico
+coletas = [[1,7,12,18], #inscricoes => 0
+		   [2,8,13,19], #tcc => 1
+		   [3,6,11,16], #estante , => 2
+		   [4,9,14,17], #turma D => 3
+		   [5,10,15,23]] #academico => 4
+
 projetos = ["inscricoes","tcc","estante","turma_D","academico"]
 
 def main():
@@ -197,7 +246,7 @@ def main():
 		rp=[]
 		erp=[]
 		prp=[]
-		print "Projeto: %s, Riscos"
+		print "Projeto: %s, Riscos" %projetos[c]
 		cont = 1
 		for i in coletas[c]:
 			print "coleta: %d" %(cont)
@@ -210,21 +259,38 @@ def main():
 		print nome	
 		cont = 1
 		for i in coletas[c]:
-			a = (float(getRP(i))/len(getREList(i)))
-			rp.append(a)
-			b = (float(getERP(i))/len(getREList(i)))
-			erp.append(b)
-			c = float(getPRP(i))/len(getREList(i))
-			prp.append(c)
+			v1 = (float(getRP(i))/len(getREList(i)))
+			rp.append(v1)
+			v2 = (float(getERP(i))/len(getREList(i)))
+			erp.append(v2)
+			v3 = float(getPRP(i))/len(getREList(i))
+			prp.append(v3)
 			print "Coleta %d: " %cont
-			print "RP: %f, ERP %f, PRP %f" %(a,b,c)
+			print "RP: %f, ERP %f, PRP %f" %(v1,v2,v3)
 			cont += 1
 			#N.append(float(getRP(i))/len(getREList(i)))
 			#prp.append((float(getERP(i))-getRP(i))#relacao entre ERP e RP
 			#normalizador /len(getREList(i)) -> qtd riscos
 		##plotLine(range(1,len(rp)+1),rp,erp,prp,'foo')
-		plotLine(range(1,len(rp)+1),rp,erp,prp,"plots",nome)
+		
+		# test# plotLine(range(1,len(rp)+1),rp,erp,prp,"plots",nome)
+		rp2 = getIndicatorValuesList(c,"RP",True)
+		erp2 = getIndicatorValuesList(c,"ERP",True)
+		prp2 = getIndicatorValuesList(c,"PRP",True)
+
+		plotIndicatorLine([rp2,erp2,prp2],["PR","ERP","PRP"],[0,5,1,2],"plots",nome)
+
 		print "---------\n\n"
+
+def environmentEvaluate(metric,normal):
+	name = "environment_metric=%s_normal=%s"%(metric,normal)
+	print "EnvironmentEvaluate"
+	print "metric = %s"  %metric
+	metricsValues=[]
+	for projID in range(5):
+		v = getIndicatorValuesList(projID,metric,normal)
+		metricsValues.append(v)
+	plotIndicatorLine(metricsValues,projetos,[0,5,1,2],"environment-plots",name)
 
 
 for c in coletas[0]:
@@ -233,3 +299,7 @@ for c in coletas[0]:
 	print"------------\n"
 
 main()
+environmentEvaluate("ERP",True)
+environmentEvaluate("RP",True)
+environmentEvaluate("PRP",True)
+environmentEvaluate("CRIT",True)
