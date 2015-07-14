@@ -4,6 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
 #pretty printing
 np.set_printoptions(suppress=True)
 np.set_printoptions(precision=3)
@@ -70,7 +74,7 @@ def plotIndicatorLine(values,curvesNames,path,fileName):
 		ax.set_ylim(botPlot,topPlot)
 		for i,j in zip(x,y[c]):
 			if SHOWNUMBERSPLOT:
-				ax.annotate(str("%.2f"%j),xy=(i,j),xytext=(5,5), textcoords='offset points')
+				ax.annotate(str("%.3f"%j),xy=(i,j),xytext=(5,5), textcoords='offset points')
 		#curve plot
 		plt.plot(x,y[c],'-ro',linewidth=2,color=colors[c],label=curvesNames[c])
 		
@@ -128,6 +132,15 @@ def formatColumn(matrix,index):
 
 def getREList(coleta):
 	return getValues('SELECT  riskexposure_id AS _id, prob, impact, risk_id from (SELECT _id AS collect_tb_id, timestamp, project_id, answerlist FROM collect_tb), (SELECT _id AS riskexposure_tb_id, prob, impact, risk_id FROM riskexposure_tb), collect_riskexposure_tb WHERE collect_tb_id = collect_id AND riskexposure_tb_id = riskexposure_id AND collect_id = %d' %coleta)
+
+def getSubREList(coleta,riskList):
+	REList = getREList(coleta)
+	out = []
+	for line in REList:
+		if line[3] in riskList:
+			out.append(line)
+	return np.array(out)
+
 
 def getRP(coleta):
 	#sem FCP
@@ -202,47 +215,57 @@ def getPRC(coleta):
 		pr += r[1]*r[2] 
 	return pr
 
-def getRiskInfo(coleta):
-	REList = getREList(coleta)
-	probList = REList[:,1]
-	impactList = REList[:,2]
-	maxImp = np.max(impactList)
-	minImp = np.min(impactList)
-	maxProb = np.max(probList)
-	minProb = np.min(probList)
-	avgImpact = np.mean(impactList)
-	avgProb = np.mean(probList)
-	sigmaImpact = np.std(impactList)#desvio padrao
-	sigmaProb = np.std(probList)
-	print "impact (max,min,avg,sigma)"
-	print maxImp
-	print minImp
-	print avgImpact
-	print sigmaImpact
-	print "probability (max,min,avg,sigma)"
-	print maxProb
-	print minProb
-	print avgProb
-	print sigmaProb
 
-def getREInfo(coleta):
-	REList = getREList(coleta)
-	probList = REList[:,1]
-	impactList = REList[:,2]
-	REList = []
-	for i in range(len(probList)):
-		REList.append(probList[i]*impactList[i])
-	REList = np.array(REList)
-	maxRE = np.max(REList)
-	minRE = np.min(REList)
-	avgRE = np.mean(REList)
-	sigmaRE = np.std(REList)
-	print "RE (max,min,avg,sigma)"
-	print maxRE
-	print minRE
-	print avgRE
-	print sigmaRE
+def getRiskEst(collectList,var,riskList):#var: (prob or impact or RE )
+	fullList = []
+	if collectList == "all":
+		collectList = coletas[0]+coletas[1]+coletas[2]+coletas[3]+coletas[4]
+	for c in collectList:
+		vList=[]
+		REList = []
+		if riskList == "all":
+			REList = getREList(c)
+		else:
+			REList = getSubREList(c,riskList)
+		#print REList
+		if not REList.size == 0:
+			if var == "RE":
+				probList = REList[:,1]
+				impactList = REList[:,2]
+				for i in range (len(probList)):
+					vList.append(probList[i]*impactList[i])
+			elif var =="prob":
+				vList = REList[:,1]
+			elif var == "impact":
+				vList = REList[:,2]
+			for i in vList:
+				fullList.append(i)
+	fullList = np.array(fullList)
+	#print "size %f" %fullList.size
+	#print fullList
+	if fullList.size == 0:
+		return 0,0,0,0
+	#print "EST: (max,min,avg,sigma)"
+	maxV = np.max(fullList)
+	minV = np.min(fullList)
+	avgV = np.mean(fullList)
+	sigmaV = np.std(fullList)
+	return maxV,minV,avgV,sigmaV
 
+def getRiskRank(collectList,var):
+	rank = []
+	dtype = [('value', float), ('risk', int)]
+	#qtd riscos = 31 -> range(1,32)
+	for risk in range(1,32):
+		v = getRiskEst(collectList,var,[risk])
+		rank.append((v[2],risk))
+	rank = np.array(rank,dtype=dtype)
+	rank = np.sort(rank, order=["value","risk"])
+	out = []
+	for i in rank:
+		out.append(i[1])
+	out.reverse()
+	return out
 
 def getIndicatorValuesList(project,indicator,normal):
 	collectList = coletas[project]
@@ -256,18 +279,25 @@ def getIndicatorValuesList(project,indicator,normal):
 		elif indicator == "PRP":
 			v = getPRP(i)
 		elif indicator == "CRIT":
-			v = getERP(i)-getRP(i)	
+			v = (getERP(i)-getRP(i))	
 		if normal:
 			v = float(v)/len(getREList(i))
 		lst.append(v)
 	return lst
 
+def stm(list):
+	return ([np.mean(list[0:4]),np.mean(list[4:8])])
+
+
+
+
 print 'normal'
-coletas = [[1,7,12,18], #inscricoes => 0
-		   [2,8,13,19], #tcc => 1
-		   [3,6,11,16], #estante , => 2
-		   [4,9,14,17], #turma D => 3
-		   [5,10,15,23]] #academico => 4
+coletas = [[1,7,12,12,12,18,18,35], #inscricoes => 0
+		   [2,8,13,13,13,19,27,34], #tcc => 1
+		   [3,6,11,16,20,26,30,31], #estante , => 2
+		   [4,9,14,17,21,22,28,32], #turma D => 3
+		   [5,10,15,23,24,25,29,33]] #academico => 4
+
 projetos = ["inscricoes","tcc","estante","turma_D","academico"]
 
 def main():
@@ -332,18 +362,20 @@ def environmentEvaluate(metric,normal):
 	plotIndicatorLine(metricsValues,projetos,"environment-plots",name)
 
 
-for c in coletas[0]:
-	getRiskInfo(c)
-	getREInfo(c)
-	print"------------\n"
-
 #==============================#
 #main()
 
-for proj in range(5):
-	for norm in [True,False]:
-		projectEvaluate(proj,norm)
+def do():
+	for proj in range(5):
+		for norm in [True,False]:
+			projectEvaluate(proj,norm)
 
-for metric in METRICLIST:
-	for norm in [True,False]:
-		environmentEvaluate(metric,norm)
+	for metric in METRICLIST:
+		for norm in [True,False]:
+			environmentEvaluate(metric,norm)
+
+#do()
+
+#for c in coletas:
+	
+print getRiskEst(coletas[0],"RE","all")
